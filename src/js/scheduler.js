@@ -22,15 +22,20 @@ class Scheduler {
   startWorkers() {
     for (let i = 0; i < this.numWorkers; i++) {
       let worker = cluster.fork();
-      worker.on("message", async ({ name, config }) => {
-        process.stdout.write(
-          `Worker ${worker.process.pid} processing job ${name}`
-        );
-        const result = await this.processJob(config);
-        process.send({ status: READY, result });
-      });
-      this.workers.push({status: READY, worker, send: worker.send});
+      worker.process.on("message", this.processJob);
+      worker.on("message", this.processResult);
+      this.workers.push({ status: READY, worker });
     }
+  }
+
+  async processJob({ name, config }) {
+    const result = await this.processJob(config);
+    process.send({ status: READY, result });
+  }
+
+  processResult(worker, {status, result}, handle) {
+    logger.info(`Worker ${worker.process.pid} finished job with results ${JSON.stringify(result)}}`);
+    logger.info(`Worker ${worker.process.pid} now has status ${status}`);
   }
 
   /**
@@ -42,15 +47,16 @@ class Scheduler {
 
     // TODO Continually check for queued jobs
     const worker = this.getAvailableWorker();
-    logger.info(`Available worker found with PID ${worker.worker.process.pid}`);
-    if(!queue.empty() && worker) {
-        const job = queue.pop();
-        worker.send(job);
+    logger.info(`Available worker found with PID ${worker.process.pid}`);
+    if (!queue.empty() && worker) {
+      const job = queue.pop();
+      worker.send(job);
     }
   }
 
   getAvailableWorker() {
-    return this.workers.find(({status}) => status === READY);
+    const worker = this.workers.find(({ status }) => status === READY);
+    return worker ? worker.worker : null;
   }
 }
 
