@@ -1,0 +1,16 @@
+{
+  "name": "core-scheduler",
+  "version": "0.0.1",
+  "description": "Holds an in-memory queue for scheduling tasks to be delegated to cluster workers",
+  "main": "src/js/index.js",
+  "repository": "https://github.com/christherama/cluster-scheduler.git",
+  "author": "Chris Ramacciotti",
+  "license": "MIT",
+  "scripts": {
+    "start": "node --experimental-modules ./src/js/index.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "winston": "^3.2.1"
+  }
+}
