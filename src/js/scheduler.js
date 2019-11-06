@@ -1,9 +1,28 @@
 import cluster from "cluster";
 import os from "os";
 import { getLogger } from "./logger.js";
-import { READY } from "./job.js";
+import { Worker, READY, BUSY } from "./worker.js";
 
 const logger = getLogger("scheduler");
+const workers = [];
+
+const getAvailableWorker = () => {
+  return workers.find(({ status }) => status === READY);
+};
+
+const getWorkerByPid = id => {
+  return workers.find(({ pid }) => pid == id);
+};
+
+const processResult = (worker, { status, result }, _) => {
+  logger.info(
+    `Worker ${worker.process.pid} finished job with results ${JSON.stringify(
+      result
+    )}`
+  );
+  logger.info(`Worker ${worker.process.pid} now has status ${status}`);
+  getWorkerByPid(worker.process.pid).status = status;
+};
 
 class Scheduler {
   /**
@@ -13,47 +32,32 @@ class Scheduler {
    */
   constructor({ numWorkers = os.cpus().length } = {}) {
     this.numWorkers = numWorkers;
-    this.workers = [];
     this.startWorkers();
   }
 
   startWorkers() {
     for (let i = 0; i < this.numWorkers; i++) {
-      let worker = cluster.fork();
-      this.workers.push({ status: READY, worker });
+      let clusterWorker = cluster.fork();
+      workers.push(new Worker({ clusterWorker }));
     }
-    cluster.on("message", this.processResult);
-  }
-
-  processResult(worker, { status, result }, handler) {
-    logger.info(
-      `Worker ${worker.process.pid} finished job with results ${JSON.stringify(
-        result
-      )}}`
-    );
-    logger.info(`Worker ${worker.process.pid} now has status ${status}`);
+    cluster.on("message", processResult);
   }
 
   /**
    * Start listening and processing jobs in the queue
-   * @param {Queue} queue Queue used to hold jobs to be processed
+   * @param {Queue} queue Queue used for holding jobs to be processed
    */
   async listen(queue) {
     this.queue = queue;
 
-    // TODO Continually check for queued jobs
-    const worker = this.getAvailableWorker();
-    logger.info(`Available worker found with PID ${worker.process.pid}`);
-    if (!queue.empty() && worker) {
-      const job = queue.pop();
-      logger.info(`Job found in queue: ${JSON.stringify(job)}`);
-      worker.send({ job });
-    }
-  }
-
-  getAvailableWorker() {
-    const worker = this.workers.find(({ status }) => status === READY);
-    return worker ? worker.worker : null;
+    setInterval(() => {
+      const worker = getAvailableWorker();
+      if (!queue.empty() && worker) {
+        const job = queue.pop();
+        worker.status = BUSY;
+        worker.send({ job });
+      }
+    }, 1000);
   }
 }
 

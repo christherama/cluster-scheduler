@@ -1,5 +1,3 @@
-const READY = "ready";
-
 class Job {
   /**
    * Create a job
@@ -13,4 +11,4 @@ class Job {
   }
 }
 
-export { Job, READY };
+export default Job;

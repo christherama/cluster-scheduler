@@ -8,7 +8,7 @@ class Queue {
   }
 
   pop() {
-    return this._items.pop();
+    return this._items.shift();
   }
 
   empty() {
