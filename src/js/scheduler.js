@@ -1,20 +1,18 @@
 import cluster from "cluster";
 import os from "os";
 import { getLogger } from "./logger.js";
+import { READY } from "./job.js";
 
 const logger = getLogger("scheduler");
-const READY = "ready";
 
 class Scheduler {
   /**
    * Create a scheduler
    * @param {Object} o
-   * @param {function} o.processJob Function for processing job
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    */
-  constructor({ processJob, numWorkers = os.cpus().length }) {
+  constructor({ numWorkers = os.cpus().length } = {}) {
     this.numWorkers = numWorkers;
-    this.processJob = processJob;
     this.workers = [];
     this.startWorkers();
   }
@@ -22,19 +20,17 @@ class Scheduler {
   startWorkers() {
     for (let i = 0; i < this.numWorkers; i++) {
       let worker = cluster.fork();
-      worker.process.on("message", this.processJob);
-      worker.on("message", this.processResult);
       this.workers.push({ status: READY, worker });
     }
+    cluster.on("message", this.processResult);
   }
 
-  async processJob({ name, config }) {
-    const result = await this.processJob(config);
-    process.send({ status: READY, result });
-  }
-
-  processResult(worker, {status, result}, handle) {
-    logger.info(`Worker ${worker.process.pid} finished job with results ${JSON.stringify(result)}}`);
+  processResult(worker, { status, result }, handler) {
+    logger.info(
+      `Worker ${worker.process.pid} finished job with results ${JSON.stringify(
+        result
+      )}}`
+    );
     logger.info(`Worker ${worker.process.pid} now has status ${status}`);
   }
 
@@ -50,7 +46,8 @@ class Scheduler {
     logger.info(`Available worker found with PID ${worker.process.pid}`);
     if (!queue.empty() && worker) {
       const job = queue.pop();
-      worker.send(job);
+      logger.info(`Job found in queue: ${JSON.stringify(job)}`);
+      worker.send({ job });
     }
   }
 

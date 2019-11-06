@@ -7,7 +7,7 @@
   "author": "Chris Ramacciotti",
   "license": "MIT",
   "scripts": {
-    "start": "node --experimental-modules ./src/js/index.js"
+    "start": "node --experimental-modules --no-warnings ./src/js/index.js"
   },
   "type": "module",
   "dependencies": {
