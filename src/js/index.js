@@ -17,11 +17,24 @@ const processJob = ({ job }) => {
 if (cluster.isMaster) {
   const scheduler = new Scheduler({ numWorkers: 2 });
 
-  const job = new Job({
-    name: "sample-job",
-    config: { greeting: "hello #1" }
-  });
-  scheduler.schedule(job).now().and().every({ms: 200});
+  scheduler
+    .schedule(
+      new Job({
+        name: "sample-job",
+        config: { greeting: "hello #1" }
+      })
+    )
+    .now();
+  scheduler
+    .schedule(
+      new Job({
+        name: "sample-job",
+        config: { greeting: "hello #2" }
+      })
+    )
+    .now()
+    .and()
+    .every({ s: 10 });
 } else {
   logger.info(`Worker started on PID ${process.pid}`);
   process.on("message", processJob);

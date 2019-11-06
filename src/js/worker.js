@@ -1,6 +1,8 @@
 const READY = "ready";
 const BUSY = "busy";
 
+const _workers = [];
+
 class Worker {
   constructor({ status = READY, clusterWorker }) {
     this.status = status;
@@ -10,7 +12,28 @@ class Worker {
 
   send(message) {
     this._worker.send(message);
+    return getAvailableWorker();
   }
 }
 
-export { Worker, READY, BUSY };
+const getAvailableWorker = () => {
+  return _workers.find(({ status }) => status === READY);
+};
+
+const getWorkerByPid = id => {
+  return _workers.find(({ pid }) => pid == id);
+};
+
+const workers = {
+    add: clusterWorker => {
+        _workers.push(new Worker({clusterWorker}));
+    },
+    byPid: id => {
+        return _workers.find(({ pid }) => pid == id);
+    },
+    nextAvailable: () => {
+        return _workers.find(({ status }) => status === READY);
+    }
+};
+
+export { workers, READY, BUSY };

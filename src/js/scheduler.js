@@ -1,19 +1,10 @@
 import cluster from "cluster";
 import os from "os";
 import { getLogger } from "./logger.js";
-import { Worker, READY, BUSY } from "./worker.js";
+import { workers, READY, BUSY } from "./worker.js";
 import Queue from "./queue.js";
 
 const logger = getLogger("scheduler");
-const workers = [];
-
-const getAvailableWorker = () => {
-  return workers.find(({ status }) => status === READY);
-};
-
-const getWorkerByPid = id => {
-  return workers.find(({ pid }) => pid == id);
-};
 
 const processResult = (worker, { status, result }, _) => {
   logger.info(
@@ -22,7 +13,7 @@ const processResult = (worker, { status, result }, _) => {
     )}`
   );
   logger.info(`Worker ${worker.process.pid} now has status ${status}`);
-  getWorkerByPid(worker.process.pid).status = status;
+  workers.byPid(worker.process.pid).status = status;
 };
 
 class Scheduler {
@@ -46,10 +37,9 @@ class Scheduler {
         return builder;
       },
       every: ({ ms = 0, s = 0, m = 0, h = 0 }) => {
-        ms +=
-          1000 * s + 60 * 1000 * m + 60 * 60 * 1000 * h;
+        ms += 1000 * s + 60 * 1000 * m + 60 * 60 * 1000 * h;
         setInterval(() => {
-            scheduler.queue.push(job);
+          scheduler.queue.push(job);
         }, ms);
         return builder;
       },
@@ -63,7 +53,7 @@ class Scheduler {
   startWorkers() {
     for (let i = 0; i < this.numWorkers; i++) {
       let clusterWorker = cluster.fork();
-      workers.push(new Worker({ clusterWorker }));
+      workers.add(clusterWorker);
     }
     cluster.on("message", processResult);
   }
@@ -74,11 +64,15 @@ class Scheduler {
    */
   async listen() {
     setInterval(() => {
-      const worker = getAvailableWorker();
-      if (!this.queue.empty() && worker) {
-        const job = this.queue.pop();
-        worker.status = BUSY;
-        worker.send({ job });
+      while (!this.queue.empty()) {
+        let worker = workers.nextAvailable();
+        if (worker) {
+          const job = this.queue.pop();
+          worker.status = BUSY;
+          worker.send({ job });
+        } else {
+          break;
+        }
       }
     }, 1000);
   }
