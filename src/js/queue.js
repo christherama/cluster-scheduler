@@ -1,6 +1,7 @@
 class Queue {
   constructor(items = []) {
     this._items = items;
+    this.and = this;
   }
 
   push(item) {
