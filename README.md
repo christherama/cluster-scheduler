@@ -16,6 +16,12 @@ This is a work-in-progress. Currently it does not exist as a package on npm, tho
 yarn install
 ```
 
+**Transpile with Babel**
+
+```bash
+yarn build
+```
+
 **Start app**
 
 ```bash

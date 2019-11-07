@@ -7,8 +7,8 @@
   "author": "Chris Ramacciotti",
   "license": "MIT",
   "scripts": {
-    "start": "node ./dist/js/index.js",
-    "build": "babel src --presets=@babel/preset-env --out-dir=dist --source-maps"
+    "build": "babel src --presets=@babel/preset-env --out-dir=dist --source-maps",
+    "start": "node ./dist/js/index.js"
   },
   "type": "module",
   "dependencies": {
