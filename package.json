@@ -13,15 +13,14 @@
     "build": "rm -rf dist && babel src -d dist"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.7.0",
+    "core-js": "^3.4.0",
+    "regenerator-runtime": "^0.13.3",
     "winston": "^3.2.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.0",
     "@babel/core": "^7.7.0",
-    "@babel/plugin-proposal-export-default-from": "^7.5.2",
     "@babel/plugin-transform-runtime": "^7.6.2",
-    "@babel/preset-env": "^7.7.1",
-    "create-index": "^2.5.0"
+    "@babel/preset-env": "^7.7.1"
   }
 }

@@ -6,11 +6,10 @@
         {
           "absoluteRuntime": false,
           "corejs": false,
-          "helpers": true,
-          "regenerator": true,
+          "helpers": false,
+          "regenerator": false,
           "useESModules": true
         }
-      ],
-      ["@babel/plugin-proposal-export-default-from"]
+      ]
     ]
   }

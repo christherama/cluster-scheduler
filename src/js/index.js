@@ -1,4 +1,7 @@
-export Scheduler from "./scheduler";
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+
+export { Scheduler } from "./scheduler";
 export { Job } from "./job";
 export { Worker, workers, READY, BUSY } from "./worker";
 export { getLogger } from "./logger";

@@ -1,6 +1,5 @@
 const cluster = require("cluster");
-const Scheduler = require("../dist/js/index.js").Scheduler;
-// import { Scheduler } from "../src/js/index.js";
+const { Scheduler, getLogger, Job, READY } = require("../dist/js/index");
 
 const logger = getLogger("index");
 

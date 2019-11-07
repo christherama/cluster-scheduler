@@ -27,29 +27,29 @@ class Worker {
 }
 
 const workers = {
-    /**
-     * Add a worker
-     * @param {cluster.Worker} clusterWorker Worker to add, usually via `cluster.fork()`
-     */
-    add: clusterWorker => {
-        _workers.push(new Worker({clusterWorker}));
-    },
+  /**
+   * Add a worker
+   * @param {cluster.Worker} clusterWorker Worker to add, usually via `cluster.fork()`
+   */
+  add: clusterWorker => {
+    _workers.push(new Worker({ clusterWorker }));
+  },
 
-    /**
-     * Find a worker by its PID
-     * @param {number} id PID of worker to find
-     */
-    byPid: id => {
-        return _workers.find(({ pid }) => pid == id);
-    },
+  /**
+   * Find a worker by its PID
+   * @param {number} id PID of worker to find
+   */
+  byPid: id => {
+    return _workers.find(({ pid }) => pid == id);
+  },
 
-    /**
-     * Gets next available worker
-     * @return {Worker} First worker with status "ready" or `undefined` if there are no ready workers
-     */
-    nextAvailable: () => {
-        return _workers.find(({ status }) => status === READY);
-    }
+  /**
+   * Gets next available worker
+   * @return {Worker} First worker with status "ready" or `undefined` if there are no ready workers
+   */
+  nextAvailable: () => {
+    return _workers.find(({ status }) => status === READY);
+  }
 };
 
 export { Worker, workers, READY, BUSY };

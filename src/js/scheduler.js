@@ -14,7 +14,11 @@ const logger = getLogger("scheduler");
  * @param {string} o.error Error message (if any) resulting from processing job
  * @param {*} o.result Result of job, which will be passed as the argument to the job's callback function
  */
-const processResult = (clusterWorker, { workerStatus, error = null, results = null }, _) => {
+const processResult = (
+  clusterWorker,
+  { workerStatus, error = null, results = null },
+  _
+) => {
   const worker = workers.byPid(clusterWorker.process.pid);
   if (error) {
     logger.error(
@@ -131,4 +135,4 @@ class Scheduler {
   }
 }
 
-export default Scheduler;
+export { Scheduler };
