@@ -1,27 +1,34 @@
+import "@babel/polyfill";
 import cluster from "cluster";
 import Scheduler from "./scheduler.js";
 import { getLogger } from "./logger.js";
-import Queue from "./queue.js";
 import { READY } from "./worker.js";
 import Job from "./job.js";
 
 const logger = getLogger("index");
 
-const processJob = ({ job }) => {
-  logger.info(`Processing job ${JSON.stringify(job)}`);
+const processJob = job => {
+  logger.info(`Processing job '${job.name}'`);
   setTimeout(() => {
-    process.send({ status: READY, result: "success" });
+    process.send({
+      workerStatus: READY,
+      results: job.config.greeting
+    });
   }, 2000);
+};
+
+const handleResult = (results) => {
+  logger.info(`Results are in: ${results}`);
 };
 
 if (cluster.isMaster) {
   const scheduler = new Scheduler({ numWorkers: 2 });
-
   scheduler
     .schedule(
       new Job({
         name: "sample-job",
-        config: { greeting: "hello #1" }
+        config: { greeting: "hello #1" },
+        callback: handleResult
       })
     )
     .now();
@@ -29,7 +36,8 @@ if (cluster.isMaster) {
     .schedule(
       new Job({
         name: "sample-job",
-        config: { greeting: "hello #2" }
+        config: { greeting: "hello #2" },
+        callback: handleResult
       })
     )
     .now()

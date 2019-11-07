@@ -1,5 +1,5 @@
 {
-  "name": "core-scheduler",
+  "name": "cluster-scheduler",
   "version": "0.0.1",
   "description": "Holds an in-memory queue for scheduling tasks to be delegated to cluster workers",
   "main": "src/js/index.js",
@@ -7,10 +7,17 @@
   "author": "Chris Ramacciotti",
   "license": "MIT",
   "scripts": {
-    "start": "node --experimental-modules --no-warnings ./src/js/index.js"
+    "start": "node ./dist/js/index.js",
+    "build": "babel src --presets=@babel/preset-env --out-dir=dist --source-maps"
   },
   "type": "module",
   "dependencies": {
+    "@babel/polyfill": "^7.7.0",
     "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.0",
+    "@babel/core": "^7.7.0",
+    "@babel/preset-env": "^7.7.1"
   }
 }
