@@ -1,30 +1,3 @@
-# cluster-scheduler
-
-This is a nodejs package for scheduling tasks to be distributed among cluster workers that are optionally CPU-bound.
-
-## Use this package
-
-Here is a sample of how you can use this npm package.
-
-**Install the package**
-
-With `yarn`...
-
-```bash
-yarn add cluster-scheduler
-```
-
-With `npm`...
-
-```bash
-npm i cluster-scheduler
-```
-
-**Use the package in your code**
-
-_main.js_
-
-```javascript
 // Include this for forking processes
 const cluster = require("cluster");
 
@@ -82,12 +55,3 @@ if (cluster.isMaster) {
   logger.info(`Worker started on PID ${process.pid}`);
   process.on("message", processJob);
 }
-```
-
-_Note: You can find this source code in [samples/main.js](samples/main.js)_
-
-**Run your code**
-
-```bash
-node main.js
-```

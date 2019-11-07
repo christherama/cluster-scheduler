@@ -42,7 +42,7 @@ class Scheduler {
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    */
-  constructor({ numWorkers = os.cpus().length } = {}) {
+  constructor({ numWorkers = os.cpus().length }) {
     this.numWorkers = numWorkers;
     this.queue = new Queue();
     this.startWorkers();
