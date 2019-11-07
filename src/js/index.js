@@ -1,49 +1,8 @@
-import "@babel/polyfill";
-import cluster from "cluster";
-import Scheduler from "./scheduler.js";
-import { getLogger } from "./logger.js";
-import { READY } from "./worker.js";
-import Job from "./job.js";
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 
-const logger = getLogger("index");
-
-const processJob = job => {
-  logger.info(`Processing job '${job.name}'`);
-  setTimeout(() => {
-    process.send({
-      workerStatus: READY,
-      results: job.config.greeting
-    });
-  }, 2000);
-};
-
-const handleResult = (results) => {
-  logger.info(`Results are in: ${results}`);
-};
-
-if (cluster.isMaster) {
-  const scheduler = new Scheduler({ numWorkers: 2 });
-  scheduler
-    .schedule(
-      new Job({
-        name: "sample-job",
-        config: { greeting: "hello #1" },
-        callback: handleResult
-      })
-    )
-    .now();
-  scheduler
-    .schedule(
-      new Job({
-        name: "sample-job",
-        config: { greeting: "hello #2" },
-        callback: handleResult
-      })
-    )
-    .now()
-    .and()
-    .every({ s: 10 });
-} else {
-  logger.info(`Worker started on PID ${process.pid}`);
-  process.on("message", processJob);
-}
+export { Scheduler } from "./scheduler";
+export { Job } from "./job";
+export { Worker, workers, READY, BUSY } from "./worker";
+export { getLogger } from "./logger";
+export { Queue } from "./queue";

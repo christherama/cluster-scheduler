@@ -1,8 +1,8 @@
 import cluster from "cluster";
 import os from "os";
-import { getLogger } from "./logger.js";
-import { Worker, workers, BUSY } from "./worker.js";
-import Queue from "./queue.js";
+import { getLogger } from "./logger";
+import { Worker, workers, BUSY } from "./worker";
+import { Queue } from "./queue";
 
 const logger = getLogger("scheduler");
 
@@ -14,7 +14,11 @@ const logger = getLogger("scheduler");
  * @param {string} o.error Error message (if any) resulting from processing job
  * @param {*} o.result Result of job, which will be passed as the argument to the job's callback function
  */
-const processResult = (clusterWorker, { workerStatus, error = null, results = null }, _) => {
+const processResult = (
+  clusterWorker,
+  { workerStatus, error = null, results = null },
+  _
+) => {
   const worker = workers.byPid(clusterWorker.process.pid);
   if (error) {
     logger.error(
@@ -38,7 +42,7 @@ class Scheduler {
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    */
-  constructor({ numWorkers = os.cpus().length } = {}) {
+  constructor({ numWorkers = os.cpus().length }) {
     this.numWorkers = numWorkers;
     this.queue = new Queue();
     this.startWorkers();
@@ -131,4 +135,4 @@ class Scheduler {
   }
 }
 
-export default Scheduler;
+export { Scheduler };
