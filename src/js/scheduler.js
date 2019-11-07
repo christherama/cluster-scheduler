@@ -1,8 +1,8 @@
 import cluster from "cluster";
 import os from "os";
-import { getLogger } from "./logger.js";
-import { Worker, workers, BUSY } from "./worker.js";
-import Queue from "./queue.js";
+import { getLogger } from "./logger";
+import { Worker, workers, BUSY } from "./worker";
+import { Queue } from "./queue";
 
 const logger = getLogger("scheduler");
 

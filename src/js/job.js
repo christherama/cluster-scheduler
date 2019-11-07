@@ -13,4 +13,4 @@ class Job {
   }
 }
 
-export default Job;
+export { Job };
