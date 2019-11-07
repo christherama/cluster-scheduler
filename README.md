@@ -1,8 +1,6 @@
 # cluster-scheduler
 
-<a href="https://www.npmjs.com/package/cluster-scheduler">
-  <img src="https://badge.fury.io/js/cluster-scheduler.svg"/>
-</a>
+[![npm version](http://img.shields.io/npm/v/cluster-scheduler.svg?style=flat)](https://npmjs.org/package/cluster-scheduler "View this project on npm")
 
 This is a nodejs package for scheduling tasks to be distributed among cluster workers that are optionally CPU-bound.
 
