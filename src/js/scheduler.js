@@ -128,7 +128,7 @@ class Scheduler {
       let worker = workers.nextAvailable();
       while (!this.queue.empty() && worker) {
         let job = this.queue.pop();
-        worker.tatus = BUSY;
+        worker.status = BUSY;
         worker = worker.process(job);
       }
     }, 1000);
