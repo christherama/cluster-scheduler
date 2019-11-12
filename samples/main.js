@@ -17,7 +17,7 @@ const processJob = job => {
   setTimeout(() => {
     process.send({
       workerStatus: READY,
-      results: job.config.greeting // this is the argument passed to the `handleResult` function below
+      results: job.config.greeting // this is the 2nd argument passed to the `handleResult` function below
     });
   }, 2000);
 };
@@ -26,11 +26,12 @@ const processJob = job => {
  * Declare a function to handle the result of the job. This function will be called
  * upon receiving a message back from a cluster worker.
  *
- * This function accepts one argument, which is a arbitrary object sent as the `results`
- * property in the message sent by the worker above
+ * This function is passed two arguments, which is the `Worker` object that processed this job
+ * and an a arbitrary object sent as the `results` property in the message sent by the worker
+ * above.
  */
-const handleResult = results => {
-  logger.info(`Results are in: ${results}`);
+const handleResult = (worker, results) => {
+  logger.info(`Results from worker ${worker.pid} are in: ${results}`);
 };
 
 if (cluster.isMaster) {

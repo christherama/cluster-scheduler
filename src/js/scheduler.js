@@ -31,7 +31,7 @@ const processResult = (
   }
   logger.info(`Worker ${worker.pid} now has status ${workerStatus}`);
   if (worker.job.callback) {
-    worker.job.callback(results);
+    worker.job.callback(worker, results);
   }
   worker.status = workerStatus;
 };
