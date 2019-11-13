@@ -41,9 +41,11 @@ class Scheduler {
    * Create a scheduler
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
+   * @param {boolean} o.excludeDuplicateJobs Whether or not jobs of the same configuration should be excluded
    */
-  constructor({ numWorkers = os.cpus().length }) {
+  constructor({ numWorkers = os.cpus().length, excludeDuplicateJobs = false }) {
     this.numWorkers = numWorkers;
+    this.excludeDuplicateJobs = excludeDuplicateJobs;
     this.queue = new Queue();
     this.startWorkers();
     this.listen();
@@ -60,7 +62,7 @@ class Scheduler {
        * Schedule the job now
        */
       now: () => {
-        scheduler.queue.push(job);
+        scheduler.enqueueJob(job);
         return builder;
       },
 
@@ -76,7 +78,7 @@ class Scheduler {
       every: ({ ms = 0, s = 0, m = 0, h = 0 }) => {
         ms += 1000 * s + 60 * 1000 * m + 60 * 60 * 1000 * h;
         setInterval(() => {
-          scheduler.queue.push(job);
+          scheduler.enqueueJob(job);
         }, ms);
         return builder;
       },
@@ -93,7 +95,7 @@ class Scheduler {
       at: ({ ms = 0, s = 0, m = 0, h = 0 }) => {
         ms += 1000 * s + 60 * 1000 * m + 60 * 60 * 1000 * h;
         setTimeout(() => {
-          scheduler.queue.push(job);
+          scheduler.enqueueJob(job);
         }, ms);
       },
 
@@ -106,6 +108,19 @@ class Scheduler {
       }
     };
     return builder;
+  }
+
+  shouldEnqueueJob(job) {
+    if (!this.excludeDuplicateJobs) {
+      return true;
+    }
+    return this.queue.contains(job);
+  }
+
+  enqueueJob(job) {
+    if (this.shouldEnqueueJob(job)) {
+      this.queue.push(job);
+    }
   }
 
   /**
