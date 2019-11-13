@@ -114,7 +114,7 @@ class Scheduler {
     if (!this.excludeDuplicateJobs) {
       return true;
     }
-    return this.queue.contains(job);
+    return !this.queue.contains(job);
   }
 
   enqueueJob(job) {
