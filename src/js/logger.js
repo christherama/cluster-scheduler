@@ -4,18 +4,13 @@ const _loggers = {};
 
 class Logger {
   constructor(name) {
-    const { combine, timestamp, label, printf, colorize } = winston.format;
+    const { combine, timestamp, label, printf } = winston.format;
     const stdFormat = printf(({ level, message, label, timestamp }) => {
       return `${timestamp} [${label}] ${level}: ${message}`;
     });
 
     this.logger = winston.createLogger({
-      format: combine(
-        colorize(),
-        label({ label: name }),
-        timestamp(),
-        stdFormat
-      ),
+      format: combine(label({ label: name }), timestamp(), stdFormat),
       transports: [new winston.transports.Console()]
     });
   }
