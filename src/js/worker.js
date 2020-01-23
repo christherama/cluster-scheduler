@@ -10,6 +10,7 @@ class Worker {
   constructor({ status = READY, clusterWorker }) {
     this.status = status;
     this._worker = clusterWorker;
+    this.timeStarted = null;
     this.pid = clusterWorker.process.pid;
     this.job = null;
   }
@@ -21,8 +22,17 @@ class Worker {
    */
   process(job) {
     this.job = job;
+    this.timeStarted = Date.now();
     this._worker.send(job);
     return workers.nextAvailable();
+  }
+
+  /**
+   * Kills this worker by killing the underlying process
+   * @param {String} signal OS signal to send
+   */
+  kill() {
+    this._worker.process.kill();
   }
 }
 
@@ -49,6 +59,10 @@ const workers = {
    */
   nextAvailable: () => {
     return _workers.find(({ status }) => status === READY);
+  },
+
+  forEach: () => {
+    return _workers.forEach;
   }
 };
 
