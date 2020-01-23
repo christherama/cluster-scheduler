@@ -43,10 +43,15 @@ class Scheduler {
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    * @param {boolean} o.excludeDuplicateJobs Whether or not jobs of the same configuration should be excluded
    */
-  constructor({ numWorkers = os.cpus().length, excludeDuplicateJobs = false }) {
+  constructor({
+    numWorkers = os.cpus().length,
+    excludeDuplicateJobs = false,
+    workerTimeout = null
+  }) {
     this.numWorkers = numWorkers;
     this.excludeDuplicateJobs = excludeDuplicateJobs;
     this.queue = new Queue();
+    this.workerTimeout = workerTimeout;
     this.startWorkers();
     this.listen();
   }
@@ -128,10 +133,17 @@ class Scheduler {
    */
   startWorkers() {
     for (let i = 0; i < this.numWorkers; i++) {
-      let clusterWorker = cluster.fork();
-      workers.add(clusterWorker);
+      this.startWorker();
     }
     cluster.on("message", processResult);
+  }
+
+  /**
+   * Start a single worker
+   */
+  startWorker() {
+    let clusterWorker = cluster.fork();
+    workers.add(clusterWorker);
   }
 
   /**
@@ -139,14 +151,37 @@ class Scheduler {
    * @param {Queue} queue Queue used for holding jobs to be processed
    */
   async listen() {
-    setInterval(() => {
+    while (true) {
       let worker = workers.nextAvailable();
+
+      // Process jobs until all workers are busy
       while (!this.queue.empty() && worker) {
         let job = this.queue.pop();
         worker.status = BUSY;
         worker = worker.process(job);
       }
-    }, 1000);
+
+      this.respawnWorkers();
+    }
+  }
+
+  respawnWorkers() {
+    // Kill workers after timeout exceeded
+    if (this.workerTimeout) {
+      const now = Date.now();
+      let totalKilled = 0;
+      workers.forEach(w => {
+        if (now - w.timeStarted >= this.workerTimeout) {
+          w.kill();
+          totalKilled++;
+        }
+      });
+
+      // Start new workers if needed
+      for (let i = 0; i < totalKilled; i++) {
+        this.startWorker();
+      }
+    }
   }
 }
 
