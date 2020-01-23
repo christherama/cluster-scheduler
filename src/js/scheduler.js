@@ -152,7 +152,7 @@ class Scheduler {
    * @param {Queue} queue Queue used for holding jobs to be processed
    */
   async listen() {
-    while (true) {
+    setInterval(() => {
       let worker = workers.nextAvailable();
 
       // Process jobs until all workers are busy
@@ -163,7 +163,7 @@ class Scheduler {
       }
 
       this.respawnWorkers();
-    }
+    }, 1000);
   }
 
   respawnWorkers() {
@@ -173,6 +173,7 @@ class Scheduler {
       let totalKilled = 0;
       workers.forEach(w => {
         if (now - w.timeStarted >= this.workerTimeout) {
+          logger.info(`Killing worker on PID ${w.pid}`);
           w.kill();
           totalKilled++;
         }
