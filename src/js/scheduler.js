@@ -42,6 +42,7 @@ class Scheduler {
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    * @param {boolean} o.excludeDuplicateJobs Whether or not jobs of the same configuration should be excluded
+   * @param {number} o.workerTimeout Number of milliseconds to wait after the last job a worker started before killing and respawning the worker
    */
   constructor({
     numWorkers = os.cpus().length,
