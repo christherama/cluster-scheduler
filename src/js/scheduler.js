@@ -167,12 +167,12 @@ class Scheduler {
   }
 
   respawnWorkers() {
-    // Kill workers after timeout exceeded
-    if (this.workerTimeout) {
+    // Kill workers after timeout exceeded, only if the queue is nonempty
+    if (!this.queue.empty() && this.workerTimeout) {
       const now = Date.now();
       let totalKilled = 0;
       workers.forEach(w => {
-        if (now - w.timeStarted >= this.workerTimeout) {
+        if (w.timeStarted && now - w.timeStarted >= this.workerTimeout) {
           logger.info(`Killing worker on PID ${w.pid}`);
           w.kill();
           totalKilled++;
