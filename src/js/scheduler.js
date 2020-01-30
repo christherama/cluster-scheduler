@@ -29,11 +29,19 @@ const processResult = (
       `Worker ${worker.pid} successfully processed job '${worker.job.name}'`
     );
   }
-  logger.info(`Worker ${worker.pid} now has status ${workerStatus}`);
+
   if (worker.job.callback) {
     worker.job.callback(worker, results);
   }
-  worker.status = workerStatus;
+
+  // Kill lazy workers
+  if (worker.lazy) {
+    worker.kill();
+    logger.info(`Lazy worker ${worker.pid} killed`);
+  } else {
+    worker.status = workerStatus;
+    logger.info(`Worker ${worker.pid} now has status ${workerStatus}`);
+  }
 };
 
 class Scheduler {
@@ -42,15 +50,18 @@ class Scheduler {
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
    * @param {boolean} o.excludeDuplicateJobs Whether or not jobs of the same configuration should be excluded
+   * @param {boolean} o.lazy When true, spawns a process to complete a scheduled job, then kills the process. Defaults to false.
    * @param {number} o.workerTimeout Number of milliseconds to wait after the last job a worker started before killing and respawning the worker
    */
   constructor({
     numWorkers = os.cpus().length,
     excludeDuplicateJobs = false,
+    lazy = false,
     workerTimeout = null
   }) {
     this.numWorkers = numWorkers;
     this.excludeDuplicateJobs = excludeDuplicateJobs;
+    this.lazy = lazy;
     this.queue = new Queue();
     this.workerTimeout = workerTimeout;
     this.startWorkers();
@@ -133,8 +144,10 @@ class Scheduler {
    * Create workers and listen to messages from workers
    */
   startWorkers() {
-    for (let i = 0; i < this.numWorkers; i++) {
-      this.startWorker();
+    if (!this.lazy) {
+      for (let i = 0; i < this.numWorkers; i++) {
+        this.startWorker();
+      }
     }
     cluster.on("message", processResult);
   }
@@ -142,9 +155,13 @@ class Scheduler {
   /**
    * Start a single worker
    */
-  startWorker() {
+  startWorker(lazy = false) {
     let clusterWorker = cluster.fork();
-    workers.add(clusterWorker);
+    const worker = workers.add(clusterWorker, lazy);
+    logger.info(
+      `${lazy ? "Lazy worker" : "Worker"} started on PID ${worker.pid}`
+    );
+    return worker;
   }
 
   /**
@@ -153,13 +170,25 @@ class Scheduler {
    */
   async listen() {
     setInterval(() => {
-      let worker = workers.nextAvailable();
-
-      // Process jobs until all workers are busy
-      while (!this.queue.empty() && worker) {
-        let job = this.queue.pop();
-        worker.status = BUSY;
-        worker = worker.process(job);
+      while (!this.queue.empty()) {
+        if (this.lazy && workers.length() < this.numWorkers) {
+          // Lazy mode: start worker if limit hasn't been reached and process job
+          const job = this.queue.pop();
+          const lazyWorker = this.startWorker(true);
+          lazyWorker.process(job);
+          lazyWorker.status = BUSY;
+        } else if (!this.lazy) {
+          // Non-lazy mode: process jobs until all workers are busy
+          const availableWorker = workers.nextAvailable();
+          if (availableWorker) {
+            const job = this.queue.pop();
+            availableWorker.process(job);
+            availableWorker.status = BUSY;
+          }
+        } else {
+          // No workers available or limit reached: try again during next call to setInterval
+          break;
+        }
       }
 
       this.respawnWorkers();
@@ -167,8 +196,8 @@ class Scheduler {
   }
 
   respawnWorkers() {
-    // Kill workers after timeout exceeded, only if the queue is nonempty
-    if (!this.queue.empty() && this.workerTimeout) {
+    // Kill workers after timeout exceeded
+    if (this.workerTimeout) {
       const now = Date.now();
       let totalKilled = 0;
       workers.forEach(w => {
@@ -180,8 +209,10 @@ class Scheduler {
       });
 
       // Start new workers if needed
-      for (let i = 0; i < totalKilled; i++) {
-        this.startWorker();
+      if (!this.lazy) {
+        for (let i = 0; i < totalKilled; i++) {
+          this.startWorker();
+        }
       }
     }
   }
