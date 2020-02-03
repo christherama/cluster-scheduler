@@ -1,3 +1,4 @@
+import { isArray } from "util";
 import { isEqual } from "lodash";
 
 class Queue {
@@ -6,7 +7,10 @@ class Queue {
   }
 
   push(item) {
-    this._items.push(item);
+    const items = isArray(item) ? item : [item];
+    items.forEach(item => {
+      this._items.push(item);
+    });
   }
 
   pop() {
