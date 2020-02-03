@@ -3,6 +3,7 @@ import os from "os";
 import { getLogger } from "./logger";
 import { Worker, workers, BUSY } from "./worker";
 import { Queue } from "./queue";
+import { isArray } from "util";
 
 const logger = getLogger("scheduler");
 
@@ -49,17 +50,20 @@ class Scheduler {
    * Create a scheduler
    * @param {Object} o
    * @param {number} o.numWorkers Number of cluster workers (defaults to number of CPU cores)
+   * @param {boolean} o.continuous Whether or not jobs should be processed continuously instead of being scheduled at a set interval
    * @param {boolean} o.excludeDuplicateJobs Whether or not jobs of the same configuration should be excluded
    * @param {boolean} o.lazy When true, spawns a process to complete a scheduled job, then kills the process. Defaults to false.
    * @param {number} o.workerTimeout Number of milliseconds to wait after the last job a worker started before killing and respawning the worker
    */
   constructor({
     numWorkers = os.cpus().length,
+    continuous = false,
     excludeDuplicateJobs = false,
     lazy = false,
     workerTimeout = null
   }) {
     this.numWorkers = numWorkers;
+    this.continuous = continuous;
     this.excludeDuplicateJobs = excludeDuplicateJobs;
     this.lazy = lazy;
     this.queue = new Queue();
@@ -73,6 +77,12 @@ class Scheduler {
    * @param {Job} job Job to schedule
    */
   schedule(job) {
+    if (this.continuous) {
+      const jobs = isArray(job) ? job : [job];
+      this._processContinuously(jobs);
+      return;
+    }
+
     const scheduler = this;
     const builder = {
       /**
@@ -127,6 +137,14 @@ class Scheduler {
     return builder;
   }
 
+  /**
+   * Enqueues all jobs to be processed on a continual basis, without regard to any time interval
+   * @param {Job[]} jobs Array of jobs to process continuously
+   */
+  _processContinuously(jobs) {
+    this.queue.push(jobs);
+  }
+
   shouldEnqueueJob(job) {
     if (!this.excludeDuplicateJobs) {
       return true;
@@ -171,9 +189,10 @@ class Scheduler {
   async listen() {
     setInterval(() => {
       while (!this.queue.empty()) {
+        let job;
         if (this.lazy && workers.length() < this.numWorkers) {
           // Lazy mode: start worker if limit hasn't been reached and process job
-          const job = this.queue.pop();
+          job = this.queue.pop();
           const lazyWorker = this.startWorker(true);
           lazyWorker.process(job);
           lazyWorker.status = BUSY;
@@ -181,13 +200,18 @@ class Scheduler {
           // Non-lazy mode: process jobs until all workers are busy
           const availableWorker = workers.nextAvailable();
           if (availableWorker) {
-            const job = this.queue.pop();
+            job = this.queue.pop();
             availableWorker.process(job);
             availableWorker.status = BUSY;
           }
         } else {
           // No workers available or limit reached: try again during next call to setInterval
           break;
+        }
+
+        // If continuous mode, place job back on queue
+        if (job && this.continuous) {
+          this.enqueueJob(job);
         }
       }
 
