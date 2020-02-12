@@ -81,7 +81,7 @@ class Worker {
    * @param {String} signal OS signal to send
    */
   kill() {
-    this._worker.kill();
+    this._worker.process.kill();
     workers.remove(this.pid);
   }
 }
