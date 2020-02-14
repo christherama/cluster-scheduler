@@ -20,20 +20,20 @@ const processResult = (
   { workerStatus, error = null, results = null },
   _
 ) => {
-  // Ignore messages that don't match the format expected
-  if (!clusterWorker || !workerStatus) {
+  const worker = workers.byPid(clusterWorker.process.pid);
+
+  // Ignore messages that don't match the format expected or worker was already killed,
+  if (!clusterWorker || !workerStatus || !worker) {
     return;
   }
 
-  const worker = workers.byPid(clusterWorker.process.pid);
-
   if (error) {
     logger.error(
-      `Worker ${worker.pid} encountered an error while processing job '${worker.job.name}': ${error})`
+      `Worker ${clusterWorker.process.pid} encountered an error while processing job '${worker.job.name}': ${error})`
     );
   } else {
     logger.info(
-      `Worker ${worker.pid} successfully processed job '${worker.job.name}'`
+      `Worker ${clusterWorker.process.pid} successfully processed job '${worker.job.name}'`
     );
   }
 
