@@ -20,7 +20,13 @@ const processResult = (
   { workerStatus, error = null, results = null },
   _
 ) => {
+  // Ignore messages that don't match the format expected
+  if (!clusterWorker || !workerStatus) {
+    return;
+  }
+
   const worker = workers.byPid(clusterWorker.process.pid);
+
   if (error) {
     logger.error(
       `Worker ${worker.pid} encountered an error while processing job '${worker.job.name}': ${error})`
