@@ -23,7 +23,7 @@ const processResult = (
   const worker = workers.byPid(clusterWorker.process.pid);
 
   // Ignore messages that don't match the format expected or worker was already killed,
-  if (!clusterWorker || !workerStatus || !worker) {
+  if (!clusterWorker || !workerStatus || !worker || !worker.pid) {
     return;
   }
 
