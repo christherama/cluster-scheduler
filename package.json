@@ -1,6 +1,6 @@
 {
   "name": "cluster-scheduler",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Holds an in-memory queue for scheduling tasks to be delegated to cluster workers.",
   "engines": {
     "node": ">=6.0.0"
